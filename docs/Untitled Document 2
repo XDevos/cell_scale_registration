@@ -1,0 +1,10 @@
+take label number of the selected mask (well isolated) 924 ! (scan_001_DAPI_005_ROI_converted_decon_ch00_3Dmasks.npy) REPO:/home/xdevos/grey/ProcessedData_2024/Experiment_49_David_RAMM_DNAFISH_Bantignies_proto_G1E_cells_LRKit/deinterleave_deconvolved_test/005
+take center
+extract, on dapi fiducial, area around this centre =~ radius(mask) + 25%
+extract on RT17, the same area
+X-corr in 2D(X,Y) and shift RT17 area
+Extract for both dapi and RT17 fiducial the real radius(mask)
+convert both image to polar coord
+X-corr both
+Apply the radius shift in the cartesian domain like a rescaling 
+evaluate the registration with a MSE or SSIM
