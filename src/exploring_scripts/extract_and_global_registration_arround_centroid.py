@@ -77,6 +77,24 @@ def save_png(data, output_path):
     print(f"> $OUTPUT{output_path}")
 
 
+def extract_circle(image_np, radius_reduction=0.1):
+
+    # Obtenir les dimensions de l'image
+    height, width = image_np.shape
+    center = [height / 2, width / 2]
+    radius = min(height // 2, width // 2) * (1 - radius_reduction)
+    # Créer un masque circulaire
+    Y, X = np.ogrid[:height, :width]
+    dist_from_center = np.sqrt((X - center[0]) ** 2 + (Y - center[1]) ** 2)
+    mask = dist_from_center <= radius
+
+    # Appliquer le masque circulaire
+    circular_image = np.zeros_like(image_np)
+    circular_image[mask] = image_np[mask]
+
+    return circular_image
+
+
 def global_align(cycle_list):
     in_dir = "OUT/extract_arround_centroid/"
     out_dir = "OUT/global_registration/"
@@ -86,8 +104,8 @@ def global_align(cycle_list):
     for cycle in cycle_list:
         ref_img = load_fiducial(in_dir, ref)
         target_img = load_fiducial(in_dir, cycle)
-        ref_proj = ref_img.max(axis=0)
-        target_proj = target_img.max(axis=0)
+        ref_proj = extract_circle(ref_img.max(axis=0), radius_reduction=0)
+        target_proj = extract_circle(target_img.max(axis=0))
         save_png(ref_proj, f"{out_dir}RAW/proj_{ref}_fiducial.png")
         save_png(target_proj, f"{out_dir}RAW/proj_{cycle}_fiducial.png")
         # registration global

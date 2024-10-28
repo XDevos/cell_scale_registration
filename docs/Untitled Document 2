@@ -8,3 +8,5 @@ convert both image to polar coord
 X-corr both
 Apply the radius shift in the cartesian domain like a rescaling 
 evaluate the registration with a MSE or SSIM
+
+run_reg.py -C 
