@@ -8,34 +8,34 @@ from skimage import io
 
 def load_tif(path):
     data = io.imread(path)
-    # print(f"TIF loaded: {path}")
+    print(f"TIF loaded: {path}")
     return data
 
 
 def save_tif(path, data):
     io.imsave(path, data)
-    # print(f"TIF saved: {path}")
+    print(f"TIF saved: {path}")
 
 
 def load_npy(path):
     data = np.load(path)
-    # print(f"NPY loaded: {path}")
+    print(f"NPY loaded: {path}")
     return data
 
 
 def save_npy(path, data):
     np.save(path, data)
-    # print(f"NPY saved: {path}")
+    print(f"NPY saved: {path}")
 
 
 def save_png(path, data):
     if path[-3:] != "png":
         s_path = path.split(".")
-        # print(f"Remove extension '{s_path.pop()}' by 'png'")
+        print(f"Remove extension '{s_path.pop()}' by 'png'")
         s_path.append("png")
         path = ".".join(s_path)
     io.imsave(path, data)
-    # print(f"PNG saved: {path}")
+    print(f"PNG saved: {path}")
 
 
 def save_to_compare(masked_ref, masked_target, sub_folder):

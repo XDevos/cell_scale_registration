@@ -11,12 +11,15 @@ from skimage.filters import window, difference_of_gaussians
 from scipy.fft import fft2, fftshift
 
 
-def rescale_target(target, shift_scale):
-    tform = SimilarityTransform(scale=shift_scale)
-    return warp(target, tform.inverse)
+def zoom_on_center(target, shift_scale):
+    shape = target.shape
+    center = (shape[0] / 2, shape[1] / 2)  # Centre de l'image
+    translation_center = (-center[0] * (shift_scale - 1), -center[1] * (shift_scale - 1))
+    similarity_transform = SimilarityTransform(scale=shift_scale, translation= translation_center)
+    return warp(target, similarity_transform, output_shape=shape)
+    
 
-
-def shift_polar_simple(ref_2d, target_2d, higkh):
+def shift_polar_translate(ref_2d, target_2d, higkh):
     # First, band-pass filter both images
     low = 2
     high = 5
@@ -50,9 +53,9 @@ def shift_polar_simple(ref_2d, target_2d, higkh):
     # Use translation parameters to calculate rotation and scaling parameters
     shiftr, shiftc = shifts[:2]
     klog = shape[1] / np.log(radius)
-    shift_scale = 1 / np.exp(shiftc / klog)
+    shift_scale = np.exp(shiftc / klog)
 
-    rescaled_target = rescale_target(target_2d, shift_scale)
+    rescaled_target = zoom_on_center(target_2d, shift_scale)
     print(f"SHIFT_SCALE == {shift_scale}")
     return rescaled_target
 
@@ -71,7 +74,7 @@ def main():
             target_name = os.path.join(folder, in_sub_folder, funct, "target.npy")
             ref_2d = load_npy(ref_name)
             target_2d = load_npy(target_name)
-            scaled_targ = shift_polar_simple(ref_2d, target_2d, low)
+            scaled_targ = shift_polar_translate(ref_2d, target_2d, low)
             save_to_compare(
                 ref_2d, scaled_targ, f"7_global_translate_polar_log/{funct}"
             )
