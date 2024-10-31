@@ -5,8 +5,10 @@ import numpy as np
 from skimage.metrics import structural_similarity as ssim
 from skimage.metrics import mean_squared_error
 
+
 def normalize_img(img):
     return (img - np.min(img)) / (np.max(img) - np.min(img))
+
 
 def print_ssim_mse(ref, targ):
     print("Normalize both images before comparaison...")
@@ -16,3 +18,8 @@ def print_ssim_mse(ref, targ):
     print(f"SSIM: {ssim_none}")
     mse_none = mean_squared_error(norm_ref, norm_target)
     print(f"MSE: {mse_none}")
+
+
+def plot_comparaison():
+    # TODO
+    pass
