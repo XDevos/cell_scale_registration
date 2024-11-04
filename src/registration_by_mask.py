@@ -26,7 +26,7 @@ def filter_masks_by_intensity_max(dapi_3d_mask, dapi_3d):
 
     for region in tqdm(
         regionprops(dapi_3d_mask, intensity_image=dapi_3d),
-        desc="Traitement des masques 3D",
+        desc="Collect 3D masks information",
     ):
         intensity_max_values.append(np.max(region.intensity_image))
         region_labels.append(region.label)
@@ -45,9 +45,14 @@ def filter_masks_by_intensity_max(dapi_3d_mask, dapi_3d):
 
     # Remove masks without enough intensity
     new_segmentation = np.zeros_like(dapi_3d_mask)
-    for max_intensity, label_id in zip(intensity_max_values, region_labels):
+    mask_kept_n = 0
+    for max_intensity, label_id in tqdm(
+        zip(intensity_max_values, region_labels), desc="Filter 3D masks"
+    ):
         if max_intensity >= creux_intensity:
             new_segmentation[dapi_3d_mask == label_id] = label_id
+            mask_kept_n += 1
+    print(f"Number of kept masks: {mask_kept_n}")
 
     return new_segmentation
 
@@ -60,9 +65,42 @@ def get_relevant_masks_info(dapi_3d_mask, dapi_3d):
 
 
 def extract_masked_tif(data_3d, bbox):
+    print(f"data_3d.shape: {data_3d.shape}")
+    print(f"bbox: {bbox}")
     # TODO: may be take the real mask (like a sphere and not just bbox of mask)
     minz, minx, miny, maxz, maxx, maxy = bbox
-    return data_3d[minz:maxz, minx:maxx, miny:maxy]
+    # Determine the size of the requested extraction
+    depth = maxz - minz
+    height = maxx - minx
+    width = maxy - miny
+
+    # Create an output array filled with zeros
+    extracted = np.zeros((depth, height, width), dtype=data_3d.dtype)
+
+    # Compute the overlapping region within the bounds of data_3d
+    z_start = max(0, minz)
+    x_start = max(0, minx)
+    y_start = max(0, miny)
+    z_end = min(data_3d.shape[0], maxz)
+    x_end = min(data_3d.shape[1], maxx)
+    y_end = min(data_3d.shape[2], maxy)
+
+    # Compute where to place this region in the output array
+    extracted_z_start = z_start - minz
+    extracted_x_start = x_start - minx
+    extracted_y_start = y_start - miny
+    extracted_z_end = extracted_z_start + (z_end - z_start)
+    extracted_x_end = extracted_x_start + (x_end - x_start)
+    extracted_y_end = extracted_y_start + (y_end - y_start)
+
+    # Fill the overlapping region in the output array
+    extracted[
+        extracted_z_start:extracted_z_end,
+        extracted_x_start:extracted_x_end,
+        extracted_y_start:extracted_y_end,
+    ] = data_3d[z_start:z_end, x_start:x_end, y_start:y_end]
+
+    return extracted
 
 
 def get_global_shift(dapi_fiducial_3d, target_fiducial_3d, bbox):
@@ -102,25 +140,32 @@ def shift_bbox(bbox, shift):
         raise ValueError(
             f"Uncompatible dimension for shift ({shift}) and bbox ({bbox})."
         )
-    new_bbox = np.zeros(len(bbox))
+    round_shift = np.round(shift)
+    new_bbox = np.zeros(len(bbox), dtype=int)
     for axis in range(dim):
-        new_bbox[axis] = bbox[axis] + shift[axis]
-        new_bbox[axis + dim] = bbox[axis + dim] + shift[axis]
-    return tuple(new_bbox)
+        new_bbox[axis] = int(bbox[axis] + round_shift[axis])
+        new_bbox[axis + dim] = int(bbox[axis + dim] + round_shift[axis])
+    return new_bbox
 
 
 def get_shifted_target_2d(target_fiducial_3d, bbox, global_shift):
     shifted_bbox = shift_bbox(bbox, global_shift)
+    print(f"shifted_bbox: {shifted_bbox}")
     bbox_target = extract_masked_tif(target_fiducial_3d, shifted_bbox)
+    print(f"bbox_target.shape: {bbox_target.shape}")
     return mip_projection(bbox_target)
 
 
 def register_translated_polar(ref_2d, target_2d):
+    print(f"ref_2d.shape: {ref_2d.shape}")
+    print(f"target_2d.shape: {target_2d.shape}")
     # First, band-pass filter both images
     low = 2
     high = 5
     ref_gaus = difference_of_gaussians(ref_2d, low, high)
     targ_gaus = difference_of_gaussians(target_2d, low, high)
+    print(f"ref_gaus.shape: {ref_gaus.shape}")
+    print(f"targ_gaus.shape: {targ_gaus.shape}")
 
     # window images
     wimage = ref_gaus * window("hann", ref_gaus.shape)
@@ -153,28 +198,37 @@ def register_translated_polar(ref_2d, target_2d):
     return shift_scale
 
 
+def coord_in_shape(shape, z, x, y):
+
+    depth, height, width = shape
+    if z < 0 or z >= depth or x < 0 or x >= height or y < 0 or y >= width:
+        return False
+    return True
+
+
 def add_mask(mask_3d, props, global_shift, zoom_factor, final_shift):
     centroid = props.centroid
     for z, x, y in props.coords:
-        new_z = z - global_shift[0]
-        new_x = (
+        new_z = np.round(z - global_shift[0])
+        new_x = np.round(
             (x - centroid[1] - final_shift[0]) / zoom_factor
             + centroid[1]
             - global_shift[1]
         )
-        new_y = (
+        new_y = np.round(
             (y - centroid[2] - final_shift[1]) / zoom_factor
             + centroid[2]
             - global_shift[2]
         )
-        mask_3d[int(new_z)][int(new_x)][int(new_y)] = props.label
+        if coord_in_shape(mask_3d.shape, new_z, new_x, new_y):
+            mask_3d[new_z][new_x][new_y] = props.label
     return mask_3d
 
 
 def register_by_dapi_mask(mask_props, dapi_fiducial_3d, target_fiducial_3d, cycle_name):
     mask_3d_for_cycle = np.zeros(target_fiducial_3d.shape)
     registration_table = init_registration_table()
-    for props in mask_props:
+    for props in tqdm(mask_props):
         global_shift, bbox_ref = get_global_shift(
             dapi_fiducial_3d, target_fiducial_3d, props.bbox
         )
