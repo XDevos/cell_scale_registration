@@ -45,11 +45,11 @@ def load_ecsv(file_path):
     return table
 
 
-def save_ecsv(table, path, comments=None):
+def save_ecsv(table, path):
     directory = os.path.dirname(path)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    table.write(path, format="ascii.ecsv", overwrite=True, comment=comments)
+    table.write(path, format="ascii.ecsv", overwrite=True)
     print(f"[Saving] {path}")
 
 
@@ -111,7 +111,7 @@ class DataManager:
         )
         self.dapi_3d_mask = load_npy(dapi_3d_mask_file)
         dapi_3d_file = os.path.join(
-            self.in_folder, "scan_001_DAPI_005_ROI_converted_decon_ch00.tif"
+            self.in_folder, "scan_001_DAPI_005_ROI_converted_decon_ch01.tif"
         )
         self.dapi_3d = load_tif(dapi_3d_file)
         dapi_fiducial_3d_file = os.path.join(
@@ -142,7 +142,7 @@ class DataManager:
 
     def save_mask_3d_for_cycle(self, mask_3d, cycle):
         filepath = os.path.join(self.out_folder, f"mask_3D_{cycle}.npy")
-        save_npy(mask_3d, filepath)
+        save_npy(filepath,mask_3d)
 
     def update_registration_info(self, registration_table):
         self.registration_info = vstack([self.registration_info, registration_table])

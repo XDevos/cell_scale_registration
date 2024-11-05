@@ -65,8 +65,6 @@ def get_relevant_masks_info(dapi_3d_mask, dapi_3d):
 
 
 def extract_masked_tif(data_3d, bbox):
-    print(f"data_3d.shape: {data_3d.shape}")
-    print(f"bbox: {bbox}")
     # TODO: may be take the real mask (like a sphere and not just bbox of mask)
     minz, minx, miny, maxz, maxx, maxy = bbox
     # Determine the size of the requested extraction
@@ -150,22 +148,16 @@ def shift_bbox(bbox, shift):
 
 def get_shifted_target_2d(target_fiducial_3d, bbox, global_shift):
     shifted_bbox = shift_bbox(bbox, global_shift)
-    print(f"shifted_bbox: {shifted_bbox}")
     bbox_target = extract_masked_tif(target_fiducial_3d, shifted_bbox)
-    print(f"bbox_target.shape: {bbox_target.shape}")
     return mip_projection(bbox_target)
 
 
 def register_translated_polar(ref_2d, target_2d):
-    print(f"ref_2d.shape: {ref_2d.shape}")
-    print(f"target_2d.shape: {target_2d.shape}")
     # First, band-pass filter both images
     low = 2
     high = 5
     ref_gaus = difference_of_gaussians(ref_2d, low, high)
     targ_gaus = difference_of_gaussians(target_2d, low, high)
-    print(f"ref_gaus.shape: {ref_gaus.shape}")
-    print(f"targ_gaus.shape: {targ_gaus.shape}")
 
     # window images
     wimage = ref_gaus * window("hann", ref_gaus.shape)
@@ -209,14 +201,14 @@ def coord_in_shape(shape, z, x, y):
 def add_mask(mask_3d, props, global_shift, zoom_factor, final_shift):
     centroid = props.centroid
     for z, x, y in props.coords:
-        new_z = np.round(z - global_shift[0])
-        new_x = np.round(
-            (x - centroid[1] - final_shift[0]) / zoom_factor
+        new_z = round(z - global_shift[0])
+        new_x = round(
+            (x - centroid[1] - final_shift[0]) * zoom_factor
             + centroid[1]
             - global_shift[1]
         )
-        new_y = np.round(
-            (y - centroid[2] - final_shift[1]) / zoom_factor
+        new_y = round(
+            (y - centroid[2] - final_shift[1]) * zoom_factor
             + centroid[2]
             - global_shift[2]
         )
@@ -255,4 +247,6 @@ def register_by_dapi_mask(mask_props, dapi_fiducial_3d, target_fiducial_3d, cycl
             mask_3d_for_cycle = add_mask(
                 mask_3d_for_cycle, props, global_shift, zoom_factor, final_shift
             )
+        else:
+            print(f"REMOVE zoom_factor: {zoom_factor} and global_shift: {global_shift}")
     return mask_3d_for_cycle, registration_table
