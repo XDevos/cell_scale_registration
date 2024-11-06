@@ -220,6 +220,7 @@ def add_mask(mask_3d, props, global_shift, zoom_factor, final_shift):
 def register_by_dapi_mask(mask_props, dapi_fiducial_3d, target_fiducial_3d, cycle_name):
     mask_3d_for_cycle = np.zeros(target_fiducial_3d.shape)
     registration_table = init_registration_table()
+    n_removed = 0
     for props in tqdm(mask_props):
         global_shift, bbox_ref = get_global_shift(
             dapi_fiducial_3d, target_fiducial_3d, props.bbox
@@ -228,7 +229,6 @@ def register_by_dapi_mask(mask_props, dapi_fiducial_3d, target_fiducial_3d, cycl
         target_2d = get_shifted_target_2d(target_fiducial_3d, props.bbox, global_shift)
         zoom_factor = register_translated_polar(ref_2d, target_2d)
         final_shift = get_final_shift(ref_2d, target_2d, zoom_factor)
-        n_removed = 0
         if zoom_factor < 1:
             registration_table.add_row(
                 [
