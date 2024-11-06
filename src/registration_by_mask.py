@@ -228,6 +228,7 @@ def register_by_dapi_mask(mask_props, dapi_fiducial_3d, target_fiducial_3d, cycl
         target_2d = get_shifted_target_2d(target_fiducial_3d, props.bbox, global_shift)
         zoom_factor = register_translated_polar(ref_2d, target_2d)
         final_shift = get_final_shift(ref_2d, target_2d, zoom_factor)
+        n_removed = 0
         if zoom_factor < 1:
             registration_table.add_row(
                 [
@@ -248,5 +249,8 @@ def register_by_dapi_mask(mask_props, dapi_fiducial_3d, target_fiducial_3d, cycl
                 mask_3d_for_cycle, props, global_shift, zoom_factor, final_shift
             )
         else:
-            print(f"REMOVE zoom_factor: {zoom_factor} and global_shift: {global_shift}")
+            n_removed += 1
+            print(
+                f"REMOVE({n_removed}) zoom_factor: {zoom_factor} and global_shift: {global_shift}"
+            )
     return mask_3d_for_cycle, registration_table
