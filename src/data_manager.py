@@ -119,10 +119,6 @@ class DataManager:
         )
         self.dapi_fiducial_3d = load_tif(dapi_fiducial_3d_file)
 
-        localizations_file = os.path.join(
-            self.in_folder, "localizations_3D_barcode.dat"
-        )
-        # self.raw_spots_3d = load_ecsv(localizations_file)
         self.registration_info = init_registration_table()
         self.cycle_list = [
             f"RT{i}"
@@ -175,7 +171,35 @@ class DataManager:
         filepath = os.path.join(self.out_folder, f"mask_3D_{cycle}.npy")
         save_npy(filepath, mask_3d)
 
+    def get_mask_3d_for_cycle(self, cycle):
+        filepath = os.path.join(self.out_folder, f"mask_3D_{cycle}.npy")
+        return load_npy(filepath)
+
     def update_registration_info(self, registration_table):
+        self.registration_info = vstack([self.registration_info, registration_table])
+        table_path = os.path.join(self.out_folder, f"registration_info.ecsv")
+        save_ecsv(self.registration_info, table_path)
+
+    def get_raw_spots_3d_by_cycle(self, cycle):
+        localizations_file = os.path.join(
+            self.in_folder, "localizations_3D_barcode.dat"
+        )
+        raw_spots_3d = load_ecsv(localizations_file)
+        if cycle[:2] != "RT":
+            raise ValueError(f"Cycle name ({cycle}) must start with RTxx")
+        barcode_n = cycle[2:]
+        mask = raw_spots_3d.groups.keys["Barcode #"] == barcode_n
+        return raw_spots_3d.groups[mask]
+
+    def get_registration_info_by_cycle(self, cycle):
+        table_path = os.path.join(self.out_folder, f"registration_info.ecsv")
+        reg_info = load_ecsv(table_path)
+        mask = reg_info.groups.keys["cycle"] == cycle
+        return reg_info.groups[mask]
+
+    def update_registered_localizations(new_spots_3d, cycle):
+        # TODO !
+        break
         self.registration_info = vstack([self.registration_info, registration_table])
         table_path = os.path.join(self.out_folder, f"registration_info.ecsv")
         save_ecsv(self.registration_info, table_path)
