@@ -187,6 +187,7 @@ def register_translated_polar(ref_2d, target_2d):
     shiftr, shiftc = shifts[:2]
     klog = shape[1] / np.log(radius)
     shift_scale = np.exp(shiftc / klog)
+    shift_scale = 1.0 if np.isnan(shift_scale) else shift_scale
     return shift_scale
 
 
