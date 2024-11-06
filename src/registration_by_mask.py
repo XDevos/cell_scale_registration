@@ -170,6 +170,8 @@ def register_translated_polar(ref_2d, target_2d):
     # Create log-polar transformed FFT mag images and register
     shape = image_fs.shape
     radius = shape[0] // 8  # only take lower frequencies
+    if radius == 0:
+        return 1.0
     warped_image_fs = warp_polar(
         image_fs, radius=radius, output_shape=shape, scaling="log", order=0
     )
@@ -230,7 +232,7 @@ def register_by_dapi_mask(mask_props, dapi_fiducial_3d, target_fiducial_3d, cycl
         target_2d = get_shifted_target_2d(target_fiducial_3d, props.bbox, global_shift)
         zoom_factor = register_translated_polar(ref_2d, target_2d)
         final_shift = get_final_shift(ref_2d, target_2d, zoom_factor)
-        if zoom_factor < 1:
+        if zoom_factor <= 1:
             registration_table.add_row(
                 [
                     cycle_name,

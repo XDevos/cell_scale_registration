@@ -168,8 +168,7 @@ class DataManager:
 
     def load_target_fiducial(self, file):
         target = load_tif(file)
-        cycle = file.split("_")[2]
-        self.cycle_list.append(cycle)
+        cycle = file.split("/")[-1].split("_")[2]
         return target, cycle
 
     def save_mask_3d_for_cycle(self, mask_3d, cycle):
