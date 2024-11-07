@@ -106,17 +106,20 @@ class DataManager:
         self.out_folder = output_folder
         os.makedirs(output_folder, exist_ok=True)
         self.in_files = extract_files(self.in_folder)
-        dapi_3d_mask_file = os.path.join(
-            self.in_folder, "scan_001_DAPI_000_ROI_converted_decon_ch00_3Dmasks.npy"
-        )
+        # dapi_3d_mask_file = os.path.join(
+        #     self.in_folder, "scan_001_DAPI_000_ROI_converted_decon_ch00_3Dmasks.npy"
+        # )
+        dapi_3d_mask_file = os.path.join(self.in_folder, "dapi_mask_3d.npy")
         self.dapi_3d_mask = load_npy(dapi_3d_mask_file)
-        dapi_3d_file = os.path.join(
-            self.in_folder, "scan_001_DAPI_000_ROI_converted_decon_ch00.tif"
-        )
+        # dapi_3d_file = os.path.join(
+        #     self.in_folder, "scan_001_DAPI_000_ROI_converted_decon_ch00.tif"
+        # )
+        dapi_3d_file = os.path.join(self.in_folder, "fidu_dapi.tif")
         self.dapi_3d = load_tif(dapi_3d_file)
-        dapi_fiducial_3d_file = os.path.join(
-            self.in_folder, "scan_001_DAPI_000_ROI_converted_decon_ch01.tif"
-        )
+        # dapi_fiducial_3d_file = os.path.join(
+        #     self.in_folder, "scan_001_DAPI_000_ROI_converted_decon_ch01.tif"
+        # )
+        dapi_fiducial_3d_file = os.path.join(self.in_folder, "fidu_dapi.tif")
         self.dapi_fiducial_3d = load_tif(dapi_fiducial_3d_file)
 
         self.registration_info = init_registration_table()
@@ -156,6 +159,7 @@ class DataManager:
         print(f"Fiducial files = \n{self.target_fiducial_files}")
 
     def get_fiducial_files(self):
+        return [os.path.join(self.in_folder, "fidu_rt.tif")]
         return [
             os.path.join(
                 self.in_folder, f"scan_001_{cycle}_000_ROI_converted_decon_ch00.tif"
@@ -165,6 +169,7 @@ class DataManager:
 
     def load_target_fiducial(self, file):
         target = load_tif(file)
+        return target, "1"
         cycle = file.split("/")[-1].split("_")[2]
         return target, cycle
 

@@ -18,6 +18,7 @@ from data_manager import init_registration_table
 
 
 def filter_masks_by_intensity_max(dapi_3d_mask, dapi_3d):
+    return dapi_3d_mask
     if dapi_3d_mask.shape != dapi_3d.shape:
         raise ValueError("Shape error")
 
@@ -169,8 +170,9 @@ def register_translated_polar(ref_2d, target_2d):
 
     # Create log-polar transformed FFT mag images and register
     shape = image_fs.shape
-    radius = shape[0] // 8  # only take lower frequencies
-    if radius == 0:
+    radius = shape[0] // 4  # only take lower frequencies
+    if radius == 1:
+        print("log(radius) == 0")
         return 1.0
     warped_image_fs = warp_polar(
         image_fs, radius=radius, output_shape=shape, scaling="log", order=0
@@ -187,6 +189,7 @@ def register_translated_polar(ref_2d, target_2d):
 
     # Use translation parameters to calculate rotation and scaling parameters
     shiftr, shiftc = shifts[:2]
+    print(radius)
     klog = shape[1] / np.log(radius)
     shift_scale = np.exp(shiftc / klog)
     shift_scale = 1.0 if np.isnan(shift_scale) else shift_scale
