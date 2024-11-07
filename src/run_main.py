@@ -14,23 +14,23 @@ def main():
     datam = DataManager(run_args.input, run_args.output)
 
     # DAPI mask registration
-    # mask_props = get_relevant_masks_info(datam.dapi_3d_mask, datam.dapi_3d)
-    # for fiducial_file in datam.target_fiducial_files:
-    #     target_fiducial, cycle_name = datam.load_target_fiducial(fiducial_file)
-    #     target_mask_3d, registration_table = register_by_dapi_mask(
-    #         mask_props, datam.dapi_fiducial_3d, target_fiducial, cycle_name
-    #     )
-    #     datam.save_mask_3d_for_cycle(target_mask_3d, cycle_name)
-    #     datam.update_registration_info(registration_table)
+    mask_props = get_relevant_masks_info(datam.dapi_3d_mask, datam.dapi_3d)
+    for fiducial_file in datam.target_fiducial_files:
+        target_fiducial, cycle_name = datam.load_target_fiducial(fiducial_file)
+        target_mask_3d, registration_table = register_by_dapi_mask(
+            mask_props, datam.dapi_fiducial_3d, target_fiducial, cycle_name
+        )
+        datam.save_mask_3d_for_cycle(target_mask_3d, cycle_name)
+        datam.update_registration_info(registration_table)
 
     # Register localizations
     for cycle in datam.cycle_list:
-        # continue  # tempo
+        continue  # tempo
         mask_3d = datam.get_mask_3d_for_cycle(cycle)
         raw_spots_3d = datam.get_raw_spots_3d_by_cycle(cycle)
         registration_info = datam.get_registration_info_by_cycle(cycle)
         new_spots_3d = register_localizations(raw_spots_3d, mask_3d, registration_info)
-        datam.update_registered_localizations(new_spots_3d, cycle)
+        datam.update_registered_localizations(new_spots_3d)
 
 
 if __name__ == "__main__":

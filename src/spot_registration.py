@@ -22,21 +22,22 @@ def coord_in_shape(shape, z, x, y):
 def register_localizations(spots_3d, mask_3d, registration_table):
     new_spots_3d = init_localization_table()
     for spot in spots_3d:
-        z = spot["zcentroid"]
-        x = spot["xcentroid"]
-        y = spot["ycentroid"]
+        z = int(spot["zcentroid"])
+        x = int(spot["xcentroid"])
+        y = int(spot["ycentroid"])
         if not coord_in_shape(mask_3d.shape, z, x, y):
             continue
-        id = mask_3d[z, x, y]
+        id = int(mask_3d[z, x, y])
         if id != 0:
-            z_global_shift = registration_table[id]["z_global_shift"]
-            x_global_shift = registration_table[id]["x_global_shift"]
-            y_global_shift = registration_table[id]["y_global_shift"]
-            zoom_factor = registration_table[id]["zoom_factor"]
-            x_centroid = registration_table[id]["x_centroid"]
-            y_centroid = registration_table[id]["y_centroid"]
-            x_final_shift = registration_table[id]["x_final_shift"]
-            y_final_shift = registration_table[id]["y_final_shift"]
+            reg_info = registration_table[registration_table["label"] == id][0]
+            z_global_shift = reg_info["z_global_shift"]
+            x_global_shift = reg_info["x_global_shift"]
+            y_global_shift = reg_info["y_global_shift"]
+            zoom_factor = reg_info["zoom_factor"]
+            x_centroid = reg_info["x_centroid"]
+            y_centroid = reg_info["y_centroid"]
+            x_final_shift = reg_info["x_final_shift"]
+            y_final_shift = reg_info["y_final_shift"]
             new_z = z + z_global_shift
             new_x = (
                 x_centroid

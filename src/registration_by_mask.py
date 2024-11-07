@@ -221,7 +221,7 @@ def add_mask(mask_3d, props, global_shift, zoom_factor, final_shift):
 
 
 def register_by_dapi_mask(mask_props, dapi_fiducial_3d, target_fiducial_3d, cycle_name):
-    mask_3d_for_cycle = np.zeros(target_fiducial_3d.shape)
+    mask_3d_for_cycle = np.zeros(target_fiducial_3d.shape, dtype=np.int16)
     registration_table = init_registration_table()
     n_removed = 0
     for props in tqdm(mask_props):
