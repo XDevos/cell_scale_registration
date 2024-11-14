@@ -18,7 +18,7 @@ from data_manager import init_registration_table
 
 
 def filter_masks_by_intensity_max(dapi_3d_mask, dapi_3d):
-    return dapi_3d_mask
+
     if dapi_3d_mask.shape != dapi_3d.shape:
         raise ValueError("Shape error")
 
@@ -31,18 +31,18 @@ def filter_masks_by_intensity_max(dapi_3d_mask, dapi_3d):
     ):
         intensity_max_values.append(np.max(region.intensity_image))
         region_labels.append(region.label)
-    counts, bins = np.histogram(intensity_max_values, bins=30)
-    peaks, _ = find_peaks(counts, height=1)
+    # counts, bins = np.histogram(intensity_max_values, bins=30)
+    # peaks, _ = find_peaks(counts, height=1)
 
-    if len(peaks) < 2:
-        raise ValueError(
-            "Fewer than two peaks found, impossible to determine a trough between two peaks."
-        )
+    # if len(peaks) < 2:
+    #     raise ValueError(
+    #         "Fewer than two peaks found, impossible to determine a trough between two peaks."
+    #     )
 
     # Find first trough
-    first_peak, second_peak = peaks[:2]
-    creux_index = np.argmin(counts[first_peak:second_peak]) + first_peak
-    creux_intensity = bins[creux_index]
+    # first_peak, second_peak = peaks[:2]
+    # creux_index = np.argmin(counts[first_peak:second_peak]) + first_peak
+    # creux_intensity = bins[creux_index]
 
     # Remove masks without enough intensity
     new_segmentation = np.zeros_like(dapi_3d_mask)
@@ -50,7 +50,7 @@ def filter_masks_by_intensity_max(dapi_3d_mask, dapi_3d):
     for max_intensity, label_id in tqdm(
         zip(intensity_max_values, region_labels), desc="Filter 3D masks"
     ):
-        if max_intensity >= creux_intensity:
+        if max_intensity >= np.mean(intensity_max_values):
             new_segmentation[dapi_3d_mask == label_id] = label_id
             mask_kept_n += 1
     print(f"Number of kept masks: {mask_kept_n}")
@@ -170,7 +170,7 @@ def register_translated_polar(ref_2d, target_2d):
 
     # Create log-polar transformed FFT mag images and register
     shape = image_fs.shape
-    radius = shape[0] // 4  # only take lower frequencies
+    radius = shape[0] // 8  # only take lower frequencies
     if radius == 1:
         print("log(radius) == 0")
         return 1.0
@@ -235,6 +235,7 @@ def register_by_dapi_mask(mask_props, dapi_fiducial_3d, target_fiducial_3d, cycl
         target_2d = get_shifted_target_2d(target_fiducial_3d, props.bbox, global_shift)
         zoom_factor = register_translated_polar(ref_2d, target_2d)
         final_shift = get_final_shift(ref_2d, target_2d, zoom_factor)
+        final_shift = [0, 0]  # to debug
         if zoom_factor <= 1:
             registration_table.add_row(
                 [

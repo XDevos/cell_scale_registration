@@ -25,7 +25,6 @@ def main():
 
     # Register localizations
     for cycle in datam.cycle_list:
-        continue  # tempo
         mask_3d = datam.get_mask_3d_for_cycle(cycle)
         raw_spots_3d = datam.get_raw_spots_3d_by_cycle(cycle)
         registration_info = datam.get_registration_info_by_cycle(cycle)
